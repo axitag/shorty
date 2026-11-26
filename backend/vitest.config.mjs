@@ -1,0 +1,11 @@
+// vitest.config.js — vitest supports ESM config even in CommonJS projects
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    environment: 'node',
+    globals: true,
+    testTimeout: 30000,
+    include: ['tests/**/*.test.{js,ts}'],
+  },
+});

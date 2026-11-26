@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: shorty-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shorty
+      POSTGRES_PASSWORD: shortypassword
+      POSTGRES_DB: shortydb
+    ports:
+      - '5432:5432'
+    volumes:
+      - shorty_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U shorty -d shortydb']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  shorty_pgdata:

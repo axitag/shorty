@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  links        Link[]
+  campaigns    Campaign[]
+
+  @@map("users")
+}
+
+model Campaign {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  source    String?
+  medium    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  links     Link[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("campaigns")
+}
+
+model Link {
+  id          String       @id @default(cuid())
+  userId      String
+  shortCode   String       @unique
+  originalUrl String
+  title       String?
+  status      LinkStatus   @default(ACTIVE)
+  expiresAt   DateTime?
+  campaignId  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign    Campaign?    @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  clicks      ClickEvent[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([shortCode])
+  @@index([deletedAt])
+  @@map("links")
+}
+
+enum LinkStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model ClickEvent {
+  id             String   @id @default(cuid())
+  linkId         String
+  clickedAt      DateTime @default(now())
+  referrerDomain String?
+  referrerUrl    String?
+  deviceType     String?
+  browser        String?
+  os             String?
+  countryCode    String?
+  region         String?
+  city           String?
+  utmSource      String?
+  utmMedium      String?
+  utmCampaign    String?
+  utmTerm        String?
+  utmContent     String?
+  isBot          Boolean  @default(false)
+  responseStatus Int      @default(302)
+  visitorHash    String?
+  link           Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@index([linkId, clickedAt(sort: Desc)])
+  @@index([clickedAt])
+  @@map("click_events")
+}
+
+model Session {
+  sid    String   @id @map("sid") @db.VarChar
+  sess   Json     @db.Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire], name: "IDX_session_expire")
+  @@map("session")
+}
